@@ -10,19 +10,26 @@ app.use(express.static("public"));
 
 // TODO: initialize values for: header, left, right, article and footer using the redis client
 
-client.hmset("header", 0, "left", 0, "article", 0, "right", 0, "footer", 0);
+client.mset("header", 0, "left", 0, "article", 0, "right", 0, "footer", 0);
 
 
 // Get values for holy grail layout
-function data() { 
-  const data = {
-    header: Number(value[0]),
-    left: Number(value[1]),
-    article: Number(value[2]),
-    right: Number(value[3]),
-    footer: Number(value[4]),
-  }
+function data() {
+  return new Promise((resolve, reject) => {
+    client.mget( ["header", "left", "article", "right", "footer"], function (err, value) {
+        const data = {
+          header: Number(value[0]),
+          left: Number(value[1]),
+          article: Number(value[2]),
+          right: Number(value[3]),
+          footer: Number(value[4]),
+        };
+        err ? reject(null) : resolve(data);
+      }
+    );
+  });
 }
+
 
 // plus
 app.get("/update/:key/:value", function (req, res) {
@@ -41,14 +48,14 @@ app.get("/update/:key/:value", function (req, res) {
     data().then((data) => {
       console.log(data);
       res.send(data);
-    });
+   });
   });
 
 });
 
 // get key data
 app.get("/data", function (req, res) {
-  data().then((data) => {
+ data().then((data) => {
     console.log(data);
     res.send(data);
  });
